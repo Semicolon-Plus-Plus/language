@@ -1,0 +1,91 @@
+include default
+
+/*
+    This is a comment-block.
+    Im the second line.
+*/
+
+//This is a inline comment.
+
+string welcome = "hello, onion!";
+
+int number = 2;//Can be a negative or positive integer.
+pint positiveInteger = 1;//Must be a positive integer.
+nint negativeInteger = -1;//Must be a negative integer.
+float floatValue = 0.343234;
+double bigFloatValue = 32.3248273423432482734234;
+bool boolean = 0;//Boolean, 0 or 1.
+
+adder = (int a, int b) => {
+    return a + b;
+}<void>
+
+sayHelloWorld = () => {
+    say("Hello world!\n");
+}<void>
+
+sayWelcome = ()<void>: say("Welcome!\n");
+
+returnWelcome = ()<string>: return "Welcome!";
+
+getName = (string& name) => {
+    default.readLine(name);//The given input is stored in the name var trough reference.
+}
+
+Human = class => {
+    private pint age;
+    private pint height;
+    private string birthDate, name;
+
+    public Human(string name, pint age, pint height, string birthDate) {
+        this.name = name;
+        this.age = age;
+        this.height = height;
+        this.birthDate = birthDate;
+    }
+
+    public getAge()<pint>: return this.age;
+    public getName()<string>: return this.name;
+    public getHeight()<pint>: return this.height;
+    public getBirthDate()<string>: return birthDate;
+}
+
+User = class : Human => {
+    private string profileName;
+    private pint ID;
+
+    public User(string profileName, pint ID)->(string name, pint age, pint height, string birthDate) {
+        this.profileName = profileName;
+        this.ID = ID;
+    }
+
+    public getID()<pint> => {
+        return this.ID;
+    }
+}
+
+root = () => {
+    say(welcome + itos(positiveInteger) + "\n");
+    pint first = 3;
+    pint second = 2;
+    say(c"{first} + {second} = {itos(adder(first, second))}\n");
+    sayHelloWorld();
+    sayWelcome();
+    string name = "dummy";
+    say(c"You are currently called '{name}', change your name:\n> ");
+    getName(name);
+    say(c"My name is {name}, not dummy!\n");
+    
+    //Testing float value
+    say(c"Float value: {floatValue, %2}");
+    //
+
+    //Class Testing
+    User me("wwwqr", 1, "dummy", 100, 200, "1999-02-05");
+
+    say(c"I ({me.getName()}) am {me.getAge()} years old.\n");
+
+    Test.showTestMessage();
+    //
+    return 0;
+}<int>
