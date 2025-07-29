@@ -1,4 +1,4 @@
-from lark import Lark, Transformer
+from lark import Lark, Transformer, Tree
 
 class Converter(Transformer):
     grammar = r"""
@@ -39,14 +39,21 @@ class Converter(Transformer):
     
     def start(self, items): return '\n\n'.join(items)
     
+    def arg(self, items):
+        type_, name = items
+        return f"{ type_ } { name }"
+    
+    def arg_list(self, items):
+        return ", ".join(items)
+    
     def normal_func(self, items):
         name = str(items[0])
-        args = items[1] if isinstance(items[1], list) else []
+        args = items[1] if isinstance(items[1], str) else ""
         contentTree = items[2]
         content = "".join(str(token) for token in contentTree.children)
         returnType = str(items[3])
         
-        return f"{ returnType } { name }({ args }) {{ {content} }}"
+        return f"{ returnType } { name }({ args }) {{ \n\t{content} }}"
     
     
     def convert(inFile, outFile, platform):
