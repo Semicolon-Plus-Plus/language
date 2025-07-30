@@ -5,5 +5,6 @@ adder = (int a, int b) => {
 main = () => {
     say("test");
     adder(2, 4);
+    if (2 == 2): say ("True");!
     die 0;
 }<int>

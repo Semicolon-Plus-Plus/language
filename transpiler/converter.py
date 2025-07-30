@@ -38,6 +38,9 @@ class Converter(Transformer):
         | return_decl
         | expr_stmt
         | block_scope
+        | if_stmt_inline
+        
+    inline_statement: var_decl | return_decl | expr_stmt
     //
     
     //Expressions
@@ -74,6 +77,10 @@ class Converter(Transformer):
     normal_func: CNAME "=" "(" [arg_list] ")" "=>" block_scope "<" TYPE ">"
     func_call: expr "(" [arg_expr_list] ")"
     //
+    
+    //Logic
+    if_stmt_inline: "if" "(" expr ")" ":" inline_statement "!"
+    //
     """
     
     
@@ -84,6 +91,11 @@ class Converter(Transformer):
     def CNAME(self, token): return str(token)
     def SIGNED_NUMBER(self, token): return str(token)
     def STRING(self, token): return str(token)
+    #
+    
+    #Statements
+    def inline_statement(self, items):
+        return items[0]
     #
     
     #Declarators
@@ -155,6 +167,15 @@ class Converter(Transformer):
         if (len(args) == 0): args = ""
         return f"{ name }({ args })"
         
+    #
+    
+    #Logic
+    def if_stmt_inline(self, items):
+        expr, content = items
+        if (isinstance(content, list)): content = "".join(content)
+        else: content = str(content)
+        
+        return f"if ({ expr }) {{ {content} }}\n"
     #
     
     #End of def's for lark parsing

@@ -12,6 +12,8 @@ int main() {
 	{
 say("test");
 adder(2, 4);
+if ((2 == 2)) { say("True");
+ }
 return 0;
 }
  }
