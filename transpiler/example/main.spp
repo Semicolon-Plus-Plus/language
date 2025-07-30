@@ -1,5 +1,5 @@
 adder = (int a, int b) => {
-    die a + b;
+    die a + b + 1;
 }<int>
 
 main = () => {

@@ -1,6 +1,10 @@
-from lark import Lark, Transformer, Tree
+from lark import Lark, Transformer
 
 class Converter(Transformer):
+    #The transpiler only accepts these platforms at the moment
+    allowedPlatforms = ["linux", "windows", "mac"]
+    #
+    
     grammar = r"""
     %import common.CNAME
     %import common.INT
@@ -72,10 +76,6 @@ class Converter(Transformer):
     //
     """
     
-    #The transpiler only accepts these platforms at the moment
-    allowedPlatforms = ["linux", "windows", "mac"]
-    #
-    
     
     #Start of def's for lark parsing
     def start(self, items): return '\n\n'.join(items)
@@ -131,18 +131,15 @@ class Converter(Transformer):
         return ", ".join(items)
     #
     
-    #Operators
-    def bin_op(self, items):
-        expr = items[0]
-        return str(expr)
-    #
-    
+    #Creating variables
     def arg(self, items):
         type_, name = items
         return f"{ type_ } { name }"
     
     def arg_list(self, items):
         return ", ".join(items)
+    
+    #
     
     #Functions
     def normal_func(self, items):
@@ -156,7 +153,7 @@ class Converter(Transformer):
     def func_call(self, items):
         name, args = items
         if (len(args) == 0): args = ""
-        return f"{ name } ({ args })"
+        return f"{ name }({ args })"
         
     #
     
@@ -217,6 +214,3 @@ class Converter(Transformer):
         except:
             print(f"Error: could not create and write outfile. Check premissions.")
             exit(3)
-        
-        
-        
