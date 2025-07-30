@@ -1,9 +1,9 @@
 adder = (int a, int b) => {
-    return a + b;
+    die a + b;
 }<int>
 
 main = () => {
     say("test");
     adder(2, 4);
-    return 0;
+    die 0;
 }<int>

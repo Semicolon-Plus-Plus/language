@@ -28,8 +28,45 @@ class Converter(Transformer):
     start: normal_func+
     //
     
+    //Statements
+    
+    ?statement: var_decl
+        | return_decl
+        | expr_stmt
+        | block_scope
+    //
+    
+    //Expressions
+    ?expr: expr "+" expr -> add
+        | expr "-" expr -> sub
+        | expr "*" expr -> mul
+        | expr "/" expr -> div
+        | expr "==" expr -> eq
+        | expr "!=" expr -> neq
+        | expr ">" expr -> gt
+        | expr "<" expr -> lt
+        | expr ">=" expr -> gtos
+        | expr "<=" expr -> ltos
+        | SIGNED_NUMBER
+        | CNAME
+        | STRING
+        | "(" expr ")"
+        
+    arg_expr_list: expr ("," expr)*
+    //
+    
+    //Declarators
+    var_decl: TYPE CNAME "=" expr ";"
+    return_decl: "die" expr ";"
+    expr_stmt: expr ";"
+    //
+    
+    //Scopes
+    block_scope: "{" statement* "}"
+    //
+    
     //Functions
-    normal_func: CNAME "=" "(" [arg_list] ")" "=>" "{" code_content "}" "<" TYPE ">"
+    normal_func: CNAME "=" "(" [arg_list] ")" "=>" block_scope "<" TYPE ">"
     //
     """
     
@@ -37,7 +74,63 @@ class Converter(Transformer):
     allowedPlatforms = ["linux", "windows", "mac"]
     #
     
+    
+    #Start of def's for lark parsing
     def start(self, items): return '\n\n'.join(items)
+    
+    #Creating variables
+    def CNAME(self, token): return str(token)
+    def SIGNED_NUMBER(self, token): return str(token)
+    def STRING(self, token): return str(token)
+    #
+    
+    #Declarators
+    def var_decl(self, items):
+        type_, cname, expr = items
+        return f"{ type_ } { cname } = { expr };\n"
+    
+    def return_decl(self, items):
+        expr = items[0]
+        return f"return { expr };\n"
+    
+    def expr_stmt(self, items):
+        expr = items[0]
+        return f"{ expr };\n"
+    #
+    
+    #Scopes
+    def block_scope(self, items):
+        content = "".join(items)
+        return f"{{\n{ content }}}\n"
+    #
+    
+    #Expressions
+    def expr(self, items):
+        expr = items[0]
+        return str(expr)
+    
+    @staticmethod
+    def exprConv(items, sign):
+        a, b = items
+        return f"({ a } { sign } { b })"
+    
+    def add(self, items): return Converter.exprConv(items, "+")
+    def sub(self, items): return Converter.exprConv(items, "-")
+    def mul(self, items): return Converter.exprConv(items, "*")
+    def div(self, items): return Converter.exprConv(items, "/")
+    def eq(self, items): return Converter.exprConv(items, "==")
+    def neq(self, items): return Converter.exprConv(items, "!=")
+    def gt(self, items): return Converter.exprConv(items, ">")
+    def lt(self, items): return Converter.exprConv(items, "<")
+    def gtos(self, items): return Converter.exprConv(items, ">=")
+    def ltos(self, items): return Converter.exprConv(items, "<=")
+    #
+    
+    #Operators
+    def bin_op(self, items):
+        expr = items[0]
+        return str(expr)
+    #
     
     def arg(self, items):
         type_, name = items
@@ -49,13 +142,14 @@ class Converter(Transformer):
     def normal_func(self, items):
         name = str(items[0])
         args = items[1] if isinstance(items[1], str) else ""
-        contentTree = items[2]
-        content = "".join(str(token) for token in contentTree.children)
+        content = str(items[2])
         returnType = str(items[3])
         
         return f"{ returnType } { name }({ args }) {{ \n\t{content} }}"
     
+    #End of def's for lark parsing
     
+    @staticmethod
     def convert(inFile, outFile, platform):
         content = ""
         try:
