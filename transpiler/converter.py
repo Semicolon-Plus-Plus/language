@@ -51,6 +51,7 @@ class Converter(Transformer):
         | CNAME
         | STRING
         | "(" expr ")"
+        | func_call
         
     arg_expr_list: expr ("," expr)*
     //
@@ -67,6 +68,7 @@ class Converter(Transformer):
     
     //Functions
     normal_func: CNAME "=" "(" [arg_list] ")" "=>" block_scope "<" TYPE ">"
+    func_call: expr "(" [arg_expr_list] ")"
     //
     """
     
@@ -124,6 +126,9 @@ class Converter(Transformer):
     def lt(self, items): return Converter.exprConv(items, "<")
     def gtos(self, items): return Converter.exprConv(items, ">=")
     def ltos(self, items): return Converter.exprConv(items, "<=")
+    
+    def arg_expr_list(self, items):
+        return ", ".join(items)
     #
     
     #Operators
@@ -139,6 +144,7 @@ class Converter(Transformer):
     def arg_list(self, items):
         return ", ".join(items)
     
+    #Functions
     def normal_func(self, items):
         name = str(items[0])
         args = items[1] if isinstance(items[1], str) else ""
@@ -146,6 +152,13 @@ class Converter(Transformer):
         returnType = str(items[3])
         
         return f"{ returnType } { name }({ args }) {{ \n\t{content} }}"
+    
+    def func_call(self, items):
+        name, args = items
+        if (len(args) == 0): args = ""
+        return f"{ name } ({ args })"
+        
+    #
     
     #End of def's for lark parsing
     
