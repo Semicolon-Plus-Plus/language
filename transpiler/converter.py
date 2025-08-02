@@ -33,7 +33,6 @@ class Converter(Transformer):
     //
     
     //Statements
-    
     ?statement: var_decl
         | return_decl
         | expr_stmt
@@ -54,6 +53,8 @@ class Converter(Transformer):
         | expr "<" expr -> lt
         | expr ">=" expr -> gtos
         | expr "<=" expr -> ltos
+        | expr "||" expr -> or_
+        | expr "&&" expr -> and_
         | SIGNED_NUMBER
         | CNAME
         | STRING
@@ -74,12 +75,16 @@ class Converter(Transformer):
     //
     
     //Functions
-    normal_func: CNAME "=" "(" [arg_list] ")" "=>" block_scope "<" TYPE ">"
+    normal_func: CNAME "=" "|" [arg_list] "|" "=>" block_scope "->" TYPE
     func_call: expr "(" [arg_expr_list] ")"
     //
     
     //Logic
-    if_stmt_inline: "if" "(" expr ")" ":" inline_statement ["else" ":" inline_statement] "!"
+    if_stmt_inline: "if" "(" expr ")" ":" inline_statement ["else" ":" (if_stmt_inline | inline_statement)] "!"
+    //
+    
+    //Setters
+    
     //
     """
     
@@ -138,6 +143,8 @@ class Converter(Transformer):
     def lt(self, items): return Converter.exprConv(items, "<")
     def gtos(self, items): return Converter.exprConv(items, ">=")
     def ltos(self, items): return Converter.exprConv(items, "<=")
+    def or_(self, items): return Converter.exprConv(items, "||")
+    def and_(self, items): return Converter.exprConv(items, "&&")
     
     def arg_expr_list(self, items):
         return ", ".join(items)
@@ -176,7 +183,12 @@ class Converter(Transformer):
         els = str(items[2]) if len(items) == 3 and items[2] is not None else None
         
         s = f"if ({ expr }) {{ { then } }}"
-        if (els): s += f" else {{ { els } }}"
+        if (els):
+            if (els.strip().startswith("if ")):
+                s += f" else { els }"#The else + if-obj
+            
+            else: s += f" else {{ { els } }}"#The else-obj
+
         return s + "\n"
     #
     
