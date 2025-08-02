@@ -58,14 +58,14 @@ class Converter(Transformer):
         | SIGNED_NUMBER
         | CNAME
         | STRING
-        | "(" expr ")"
+        | "(" expr ")" -> put_brackets
         | func_call
         
     arg_expr_list: expr ("," expr)*
     //
     
     //Declarators
-    var_decl: TYPE CNAME "=" expr ";"
+    var_decl: "let" CNAME "[" TYPE "]" "=" expr ";"
     return_decl: "die" expr ";"
     expr_stmt: expr ";"
     //
@@ -76,21 +76,24 @@ class Converter(Transformer):
     
     //Functions
     normal_func: CNAME "=" "|" [arg_list] "|" "=>" block_scope "->" TYPE
-    func_call: expr "(" [arg_expr_list] ")"
+    func_call: CNAME "(" [arg_expr_list] ")"
     //
     
     //Logic
     if_stmt_inline: "if" "(" expr ")" ":" inline_statement ["else" ":" (if_stmt_inline | inline_statement)] "!"
     //
     
-    //Setters
-    
-    //
     """
     
     
     #Start of def's for lark parsing
     def start(self, items): return '\n\n'.join(items)
+    
+    #Setters
+    def normal_setter(self, items):
+        type_, name, val = items
+        return f"{ type_ } { name } = { val };\n"
+    #
     
     #Creating variables
     def CNAME(self, token): return str(token)
@@ -105,7 +108,7 @@ class Converter(Transformer):
     
     #Declarators
     def var_decl(self, items):
-        type_, cname, expr = items
+        cname, type_, expr = items
         return f"{ type_ } { cname } = { expr };\n"
     
     def return_decl(self, items):
@@ -131,7 +134,7 @@ class Converter(Transformer):
     @staticmethod
     def exprConv(items, sign):
         a, b = items
-        return f"({ a } { sign } { b })"
+        return f"{ a } { sign } { b }"
     
     def add(self, items): return Converter.exprConv(items, "+")
     def sub(self, items): return Converter.exprConv(items, "-")
@@ -148,6 +151,9 @@ class Converter(Transformer):
     
     def arg_expr_list(self, items):
         return ", ".join(items)
+    
+    def put_brackets(self, items):
+        return f"({ "".join(items) })"
     #
     
     #Creating variables
