@@ -29,7 +29,7 @@ class Converter(Transformer):
     ?content: (balanced_paren | /[^()]+/)*
     balanced_paren: "(" content ")"
     code_content: (/[^{}<>]+/)*
-    start: normal_func+
+    start: (normal_func | fast_func)+
     //
     
     //Statements
@@ -40,6 +40,7 @@ class Converter(Transformer):
         | if_stmt_inline
         
     inline_statement: var_decl | return_decl | expr_stmt | if_stmt_inline
+    inline_block: inline_statement+
     //
     
     //Expressions
@@ -65,7 +66,7 @@ class Converter(Transformer):
     //
     
     //Declarators
-    var_decl: "let" CNAME "[" TYPE "]" "=" expr ";"
+    var_decl:  CNAME "@" TYPE "=" expr ";"
     return_decl: "die" expr ";"
     expr_stmt: expr ";"
     //
@@ -76,11 +77,12 @@ class Converter(Transformer):
     
     //Functions
     normal_func: CNAME "=" "|" [arg_list] "|" "=>" block_scope "->" TYPE
+    fast_func: CNAME "=" "|" [arg_list] "|" ":" inline_block "!"
     func_call: CNAME "(" [arg_expr_list] ")"
     //
     
     //Logic
-    if_stmt_inline: "if" "(" expr ")" ":" inline_statement ["else" ":" (if_stmt_inline | inline_statement)] "!"
+    if_stmt_inline: "if" "(" expr ")" ":" inline_block ["else" ":" (if_stmt_inline | inline_block)] "!"
     //
     
     """
@@ -104,11 +106,21 @@ class Converter(Transformer):
     #Statements
     def inline_statement(self, items):
         return items[0]
+    
+    def inline_block(self, items):
+        def flatten(lst):
+            for i in lst:
+                if isinstance(i, list):
+                    yield from flatten(i)
+                else:
+                    yield i
+                    
+        return "".join(flatten(items))
     #
     
     #Declarators
     def var_decl(self, items):
-        cname, type_, expr = items
+        type_, cname, expr = items
         return f"{ type_ } { cname } = { expr };\n"
     
     def return_decl(self, items):
@@ -180,21 +192,30 @@ class Converter(Transformer):
         if (len(args) == 0): args = ""
         return f"{ name }({ args })"
         
+    def fast_func(self, items):
+        name, _, content = items
+        args = items[1] if isinstance(items[1], str) else ""
+        return f"void { name } ({ args }) {{ { content } }}"
+        
     #
     
     #Logic
     def if_stmt_inline(self, items):
         expr = str(items[0])
-        then = str(items[1])
-        els = str(items[2]) if len(items) == 3 and items[2] is not None else None
+        then_block = str(items[1])
+        else_block = None
         
-        s = f"if ({ expr }) {{ { then } }}"
-        if (els):
-            if (els.strip().startswith("if ")):
-                s += f" else { els }"#The else + if-obj
+        if len(items) == 3 and items[2] is not None:
+            else_block = str(items[2])
             
-            else: s += f" else {{ { els } }}"#The else-obj
-
+        s = f"if ({ expr }) {{ { then_block } }}"
+        
+        if else_block:
+            if else_block.strip().startswith("if "):
+                s += f" else {else_block}"#Else if
+            else:
+                s += f" else {{ {else_block} }}"#Else block
+                
         return s + "\n"
     #
     

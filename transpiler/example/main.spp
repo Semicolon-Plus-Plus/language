@@ -2,6 +2,8 @@ adder = |int a, int b| => {
     die a + b;
 }->int
 
+fastFunc = |string msg|: say("Welcome, " + msg + "!\n");!
+
 boolCheck = |int a, int b, int exp| => {
     die (a + b) == exp;
 }->bool
@@ -13,9 +15,15 @@ main = || => {
 
     if (1 != 1): say("1 isn't 1?!\n"); else: if (3 == 3): say("Three is three.\n");!!
 
-    let test234[bool] = boolCheck(2, 2, 4);
+    int@res = adder(2, 4);
 
-    let marf[string] = "test123";
+    if (res == 6):
+    say("one");
+    say("Two");!
+
+    bool@test234 = boolCheck(2, 2, 4);
+
+    string@marf = "test123";
 
     die 0;
 }->int

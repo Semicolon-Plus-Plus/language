@@ -8,6 +8,9 @@ return a + b;
 }
 
 
+void fastFunc (std::string msg) { say("Welcome, " + msg + "!\n");
+ }
+
 bool boolCheck(int a, int b, int exp) 
 	{
 return (a + b) == exp;
@@ -24,6 +27,10 @@ if (1 != 1) { say("1 isn't 1?!\n");
  } else if (3 == 3) { say("Three is three.\n");
  }
 
+int res = adder(2, 4);
+if (res == 6) { say("one");
+say("Two");
+ }
 bool test234 = boolCheck(2, 2, 4);
 std::string marf = "test123";
 return 0;
