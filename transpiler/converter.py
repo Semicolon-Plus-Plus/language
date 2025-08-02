@@ -40,7 +40,7 @@ class Converter(Transformer):
         | block_scope
         | if_stmt_inline
         
-    inline_statement: var_decl | return_decl | expr_stmt
+    inline_statement: var_decl | return_decl | expr_stmt | if_stmt_inline
     //
     
     //Expressions
@@ -79,7 +79,7 @@ class Converter(Transformer):
     //
     
     //Logic
-    if_stmt_inline: "if" "(" expr ")" ":" inline_statement "!"
+    if_stmt_inline: "if" "(" expr ")" ":" inline_statement ["else" ":" inline_statement] "!"
     //
     """
     
@@ -160,7 +160,7 @@ class Converter(Transformer):
         content = str(items[2])
         returnType = str(items[3])
         
-        return f"{ returnType } { name }({ args }) {{ \n\t{content} }}"
+        return f"{ returnType } { name }({ args }) \n\t{content}"
     
     def func_call(self, items):
         name, args = items
@@ -171,11 +171,13 @@ class Converter(Transformer):
     
     #Logic
     def if_stmt_inline(self, items):
-        expr, content = items
-        if (isinstance(content, list)): content = "".join(content)
-        else: content = str(content)
+        expr = str(items[0])
+        then = str(items[1])
+        els = str(items[2]) if len(items) == 3 and items[2] is not None else None
         
-        return f"if ({ expr }) {{ {content} }}\n"
+        s = f"if ({ expr }) {{ { then } }}"
+        if (els): s += f" else {{ { els } }}"
+        return s + "\n"
     #
     
     #End of def's for lark parsing

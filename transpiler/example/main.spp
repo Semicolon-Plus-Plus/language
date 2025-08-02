@@ -1,10 +1,9 @@
 adder = (int a, int b) => {
-    die a + b + 1;
+    die a + b;
 }<int>
 
 main = () => {
-    say("test");
-    adder(2, 4);
-    if (2 == 2): say ("True");!
+    say("Testing...\n");
+    if (adder(2, 2) == 4): say("Adder works!\n"); else: say("Adder doesn't work\n");!
     die 0;
 }<int>
