@@ -38,8 +38,19 @@ class Converter(Transformer):
         | expr_stmt
         | block_scope
         | if_stmt_inline
+        | if_stmt
+        | list_decl
+        | list_add
+        | list_add_inline
         
-    inline_statement: var_decl | return_decl | expr_stmt | if_stmt_inline
+    inline_statement: var_decl
+        | return_decl
+        | expr_stmt
+        | if_stmt_inline
+        | list_decl
+        | list_add
+        | list_add_inline
+    
     inline_block: inline_statement+
     //
     
@@ -61,12 +72,14 @@ class Converter(Transformer):
         | STRING
         | "(" expr ")" -> put_brackets
         | func_call
+        | "[" [expr ("," | expr)* ] "]" -> def_list
         
     arg_expr_list: expr ("," expr)*
     //
     
     //Declarators
-    var_decl:  CNAME "@" TYPE "=" expr ";"
+    list_decl: "list" "<" TYPE ">" "@" CNAME "=" expr ";"
+    var_decl: CNAME "@" TYPE "=" expr ";"
     return_decl: "die" expr ";"
     expr_stmt: expr ";"
     //
@@ -76,13 +89,16 @@ class Converter(Transformer):
     //
     
     //Functions
-    normal_func: CNAME "=" "|" [arg_list] "|" "=>" block_scope "->" TYPE
-    fast_func: CNAME "=" "|" [arg_list] "|" ":" inline_block "!"
+    normal_func: CNAME "=" "(" [arg_list] ")" "=>" block_scope "->" TYPE
+    fast_func: CNAME "=" "(" [arg_list] ")" ":" inline_block "!" "->" TYPE
     func_call: CNAME "(" [arg_expr_list] ")"
+    list_add: CNAME ".add" "(" expr ")" ";"
+    list_add_inline: "(" list_add ")"
     //
     
     //Logic
     if_stmt_inline: "if" "(" expr ")" ":" inline_block ["else" ":" (if_stmt_inline | inline_block)] "!"
+    if_stmt: "if" "(" expr ")" "{" inline_block ["else" "{" (if_stmt | inline_block) "}"] "}"
     //
     
     """
@@ -130,6 +146,10 @@ class Converter(Transformer):
     def expr_stmt(self, items):
         expr = items[0]
         return f"{ expr };\n"
+    
+    def list_decl(self, items):
+        type_, name, expr = items
+        return f"std::vector<{ type_ }> { name } = { expr };\n"
     #
     
     #Scopes
@@ -166,6 +186,9 @@ class Converter(Transformer):
     
     def put_brackets(self, items):
         return f"({ "".join(items) })"
+    
+    def def_list(self, items):
+        return f"{{ { ", ".join(items) } }}"
     #
     
     #Creating variables
@@ -193,13 +216,22 @@ class Converter(Transformer):
         return f"{ name }({ args })"
         
     def fast_func(self, items):
-        name, _, content = items
+        name, _, content, type = items
         args = items[1] if isinstance(items[1], str) else ""
-        return f"void { name } ({ args }) {{ { content } }}"
+        return f"{ type } { name } ({ args }) {{ { content } }}"
+        
+    def list_add(self, items):
+        name, expr = items
+        return f"{ name }.push_back({ expr });\n"
+    
+    def list_add_inline(self, items):
+        la = items
+        return f"({ la })"
         
     #
     
     #Logic
+    @classmethod
     def if_stmt_inline(self, items):
         expr = str(items[0])
         then_block = str(items[1])
@@ -217,6 +249,9 @@ class Converter(Transformer):
                 s += f" else {{ {else_block} }}"#Else block
                 
         return s + "\n"
+    
+    def if_stmt(self, items):
+        return self.if_stmt_inline(items)
     #
     
     #End of def's for lark parsing
@@ -245,7 +280,9 @@ class Converter(Transformer):
         
         if (platform in Converter.allowedPlatforms):
             header += "#include <iostream>\n"
-            header += "void say(std::string txt) { std::cout << txt; }\n"
+            header += "#include <vector>\n"
+            
+            header += "void say(std::string txt, std::string lastAdd = \"\\n\") { std::cout << txt << lastAdd; }\n"
             
         else:
             print(f"Error: platform '{ platform }' not supported in '{ ', '.join(Converter.allowedPlatforms) }'")

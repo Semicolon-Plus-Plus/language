@@ -1,29 +1,39 @@
-adder = |int a, int b| => {
+adder = (int a, int b) => {
     die a + b;
 }->int
 
-fastFunc = |string msg|: say("Welcome, " + msg + "!\n");!
+fastFunc = (string msg): say("Welcome, " + msg + "!");!->void
 
-boolCheck = |int a, int b, int exp| => {
+boolCheck = (int a, int b, int exp) => {
     die (a + b) == exp;
 }->bool
 
-main = || => {
-    say("Testing...\n");
+main = () => {
+    say("Testing...");
 
-    if (adder(2, 2) == 4): say("Adder works!\n"); else: say("Adder doesn't work\n");!
+    if (adder(2, 2) == 4): say("Adder works!"); else: say("Adder doesn't work");!
 
-    if (1 != 1): say("1 isn't 1?!\n"); else: if (3 == 3): say("Three is three.\n");!!
+    if (1 != 1): say("1 isn't 1?!"); else: if (3 == 3): say("Three is three.");!!
 
     int@res = adder(2, 4);
 
     if (res == 6):
-    say("one");
-    say("Two");!
+        say("One.", "");
+        say("Two");
+    !
 
     bool@test234 = boolCheck(2, 2, 4);
 
     string@marf = "test123";
+
+    if (res != 7) {
+        say("res isn't 7! (OK)");
+    }
+
+    fastFunc("wwwqr");
+
+    list<int>@listTest = [1, 2, 3];
+    listTest.add(3);
 
     die 0;
 }->int
